@@ -1,5 +1,7 @@
 const { userModel } = require('../models/userSchema')
 const bcrypt = require('bcrypt')
+const JWT = require('jsonwebtoken')
+const mongoose = require('mongoose');
 
 const registerController = async (req, res) => {
   try {
@@ -17,7 +19,7 @@ const registerController = async (req, res) => {
     }
     const hashPassword = bcrypt.hashSync(password, 10)
     const newUser = await userModel.create({ name, email: newEmail, password: hashPassword })
-    return res.status(201).json({ newUser, messg: 'New User Register' })
+    return res.status(201).json({ data: newUser, messg: 'New User Register' })
 
 
   } catch (error) {
@@ -34,32 +36,69 @@ const loginController = async (req, res) => {
       res.status(422).json({ error: 'Enter All Details' })
     }
     const newEmail = email.toLowerCase()
-    const isUser = await userModel.findOne({ email: newEmail })
+    let isUser = await userModel.findOne({ email: newEmail })
     if (!isUser) {
-      return res.status(422).json({ error: 'Invalid Crendentials' })
+      return res.status(422).json({ error: 'User Not FoundS' })
     }
+    const isPasswordExisting = bcrypt.compareSync(password, isUser.password)
 
-    const correctPassword = bcrypt.compare(password, isUser.password)
-    if (!correctPassword) {
-      return res.status(422).json({ error: 'Invalid Crendentials' })
+    if (!isPasswordExisting) {
+      return res.status(422).json({ error: 'Invalid Password' })
     }
-    console.log(isUser)
+    const key = process.env.JWTKEY
+    const token = JWT.sign({ id: isUser._id, name: isUser.name }, key, { expiresIn: '1d' })
+
+    return res.status(201).json({ data: { isUser, token }, messg: 'User Login' })
   }
   catch (error) {
     console.log(error)
-    return res.status(422).json({ error: 'Login failed ' })
+    return res.status(422).json({ error: ' Invalid Crendentials Login failed ' })
   }
 };
 
-const getUserController = (req, res) => { };
+const getUserController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await userModel.findById(id).select('-password')
+    if (!user) {
+      return res.status(422).json({ messg: 'User Not Exist' })
+    }
+    return res.status(201).json({ data: user })
 
-const changeAvtarController = (req, res) => { };
+  } catch (error) {
+    console.log(error)
+    return res.status(422).json({ error: ' Internal Server Error ' })
+  }
+};
+const getAuthorController = async (req, res) => {
+  try {
+    const authors = await userModel.find().select('-password')
+    if (!authors) {
+      return res.status(422).json({ messg: 'No Author Found' })
+    }
+    return res.status(201).json({ data: authors, mssg: ' Authors List' })
+
+  }
+  catch (error) {
+    console.log(error)
+    return res.status(422).json({ error: ' Internal Server Error ' })
+  }
+};
+
+const changeAvtarController = async (req, res) => {
+  try {
+
+  } catch (error) {
+    console.log(error)
+    return res.status(422).json({ error: ' Internal Server Error ' })
+  }
+};
 
 const editUserController = (req, res) => {
   res.send("Response from editUserController ");
 };
 
-const getAuthorController = (req, res) => { };
+
 
 module.exports = {
   registerController,
