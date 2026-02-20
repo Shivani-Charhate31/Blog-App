@@ -2,6 +2,9 @@ const { userModel } = require('../models/userSchema')
 const bcrypt = require('bcrypt')
 const JWT = require('jsonwebtoken')
 const mongoose = require('mongoose');
+const fs = require('fs')
+const path = require('path')
+const { v4: uuid } = require('uuid')
 
 const registerController = async (req, res) => {
   try {
@@ -88,6 +91,22 @@ const getAuthorController = async (req, res) => {
 const changeAvtarController = async (req, res) => {
   try {
 
+    if (!req.files && !req.files.avtar) {
+      return res.status(422).json({ error: 'Please upload the img' })
+    }
+    const user = await userModel.findById(req.user.id)
+
+    // if already img delete that one n add new one
+
+
+    const { avatar } = req.files;
+
+    if (avatar.size > 500000) {
+      console.log("00000")
+      return res.status(422).json({ error: "Profile picture toobig. Should be less than 50kb" })
+
+    }
+
   } catch (error) {
     console.log(error)
     return res.status(422).json({ error: ' Internal Server Error ' })
@@ -95,7 +114,8 @@ const changeAvtarController = async (req, res) => {
 };
 
 const editUserController = (req, res) => {
-  res.send("Response from editUserController ");
+
+
 };
 
 

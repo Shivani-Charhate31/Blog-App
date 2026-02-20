@@ -11,7 +11,7 @@ const authMiddlware = (req, res, next) => {
 
             }
             req.user = info
-            console.log(info)
+            // console.log(info)
             next()
 
         })
